@@ -1,5 +1,1 @@
-<<<<<<< HEAD
-(Your local changes)
-=======
-(Changes from origin/main)
->>>>>>> origin/main
+#BreadcrumbsContact_manager-V2
