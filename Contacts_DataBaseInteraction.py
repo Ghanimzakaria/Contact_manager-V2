@@ -100,15 +100,21 @@ class GestionnaireContact:
                 print("Le prénom doit contenir uniquement des lettres.")
                 continue
             break
-
+        # Validation de l'email avec regex
+        email_regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
         while True:
             email = input("Entrez l'email: ")
+            if not re.match(email_regex, email):
+                print("L'email n'est pas valide. Veuillez réessayer.")
+                continue
             break
 
+        # Validation du téléphone avec regex
+        telephone_regex = r'^\+?\d{10,15}$'
         while True:
             telephone = input("Entrez le téléphone: ")
-            if not telephone.isdigit():
-                print("Le téléphone doit contenir uniquement des chiffres.")
+            if not re.match(telephone_regex, telephone):
+                print("Le téléphone doit contenir uniquement des chiffres (10 à 15 chiffres).")
                 continue
             break
 
