@@ -103,7 +103,6 @@ class GestionnaireContact:
 
         while True:
             email = input("Entrez l'email: ")
-            # Ajouter une validation d'email si nécessaire
             break
 
         while True:
