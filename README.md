@@ -19,6 +19,15 @@ Ce projet est un gestionnaire de contacts développé en Python. Il permet à l'
 2. Installez les dépendances nécessaires :
    ```bash
    pip install pyodbc
+
+3. Configurez votre base de données SQL Server et créez une base de données nommée `Gestion_Contacts`.
+
+## Utilisation
+
+Pour exécuter le programme, utilisez la commande suivante :
+```bash
+python nom_du_fichier.py
+
 # Documentation
 
 ## 1. Classe `Contact`
