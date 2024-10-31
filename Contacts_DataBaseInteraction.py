@@ -1,21 +1,21 @@
 import pyodbc
-
-# Exercice : Gestionnaire de Contacts en Python
-# 1.	Création de la classe Contact :
 import logging
 import inspect
 
+# Classe représentant un contact.
 class Contact:
     def __init__(self, nom, prenom, email, telephone):
+        """Initialise un contact avec le nom, prénom, email et téléphone."""
         self._nom = nom
         self._prenom = prenom
         self._email = email
         self._telephone = telephone
 
     def __str__(self):
+        """Retourne une représentation sous forme de chaîne du contact."""
         return f"Nom: {self.nom}, Prénom: {self.prenom}, Email: {self.email}, Téléphone: {self.telephone}"
 
-    # Getters
+    # Getters pour accéder aux attributs privés
     @property
     def nom(self):
         return self._nom
@@ -32,6 +32,7 @@ class Contact:
     def telephone(self):
         return self._telephone
 
+    # Setters pour modifier les attributs privés
     @nom.setter
     def nom(self, nom):
         self._nom = nom
@@ -49,26 +50,26 @@ class Contact:
         self._telephone = telephone
 
 
-"""
-2.	Gestion des Contacts en Mémoire :
-3.	Persistance des Contacts dans un Fichier Texte :"""
-
-
+# Classe pour gérer les contacts.
 class GestionnaireContact:
     def __init__(self):
-        self.contacts = []
+        """Initialise le gestionnaire de contacts et crée la table si elle n'existe pas."""
+        self.contacts = []  # Liste des contacts en mémoire
         self.connection_string = (
             'DRIVER={ODBC Driver 17 for SQL Server};'
             'SERVER=ZAKARIA_LAPTOP;'  
             'DATABASE=Gestion_Contacts;'  
             'Trusted_Connection=yes;'
-            )
-        self.create_table()
+        )
+        self.create_table()  # Appel de la méthode pour créer la table
+
     def connect_db(self):
+        """Établit une connexion à la base de données et retourne l'objet de connexion."""
         print("connected")
         return pyodbc.connect(self.connection_string)
 
     def create_table(self):
+        """Crée la table Contacts dans la base de données si elle n'existe pas déjà."""
         create_table_query = """
         IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Contacts' AND xtype='U')
         CREATE TABLE Contacts (
@@ -83,7 +84,9 @@ class GestionnaireContact:
             cursor = conn.cursor()
             cursor.execute(create_table_query)
             conn.commit()
+
     def ajouter_contact(self):
+        """Ajoute un nouveau contact à la base de données après validation des données saisies."""
         while True:
             nom = input("Entrez le nom: ")
             if not nom.isalpha():
@@ -97,19 +100,25 @@ class GestionnaireContact:
                 print("Le prénom doit contenir uniquement des lettres.")
                 continue
             break
-
+        # Validation de l'email avec regex
+        email_regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
         while True:
             email = input("Entrez l'email: ")
-            # Add email validation if necessary
-            break
-
-        while True:
-            telephone = input("Entrez le téléphone: ")
-            if not telephone.isdigit():
-                print("Le téléphone doit contenir uniquement des chiffres.")
+            if not re.match(email_regex, email):
+                print("L'email n'est pas valide. Veuillez réessayer.")
                 continue
             break
 
+        # Validation du téléphone avec regex
+        telephone_regex = r'^\+?\d{10,15}$'
+        while True:
+            telephone = input("Entrez le téléphone: ")
+            if not re.match(telephone_regex, telephone):
+                print("Le téléphone doit contenir uniquement des chiffres (10 à 15 chiffres).")
+                continue
+            break
+
+        # Requête d'insertion d'un contact dans la base de données
         insert_query = """
         INSERT INTO [Contacts] (Nom, Prenom, Email, Telephone)
         VALUES (?, ?, ?, ?);
@@ -120,8 +129,8 @@ class GestionnaireContact:
             conn.commit()
         logging.info(f"Contact ajouté : {nom} {prenom}")
 
-
     def afficher_contacts(self):
+        """Affiche tous les contacts enregistrés dans la base de données."""
         select_query = "SELECT * FROM Contacts;"
 
         with self.connect_db() as conn:
@@ -135,8 +144,9 @@ class GestionnaireContact:
                     print(f"Nom: {row.Nom}, Prénom: {row.Prenom}, Email: {row.Email}, Téléphone: {row.Telephone}")
 
     def rechercher_contact(self, nom):
+        """Recherche un contact par nom et affiche les résultats ou retourne les détails du contact pour modification ou suppression."""
         select_query = "SELECT * FROM Contacts WHERE Nom = ?;"
-        caller = inspect.stack()[1].function
+        caller = inspect.stack()[1].function  # Déterminer la fonction appelante
         with self.connect_db() as conn:
             cursor = conn.cursor()
             cursor.execute(select_query, (nom,))
@@ -148,13 +158,14 @@ class GestionnaireContact:
                 if caller == "modifier_contact":
                     return results
                 elif caller == "supprimer_contact":
-                    return results[0].Id,results
+                    return results[0].Id, results
                 else:
                     print(f"Nom: {row.Nom}, Prénom: {row.Prenom}, Email: {row.Email}, Téléphone: {row.Telephone}")
         else:
             print(f"Aucun contact trouvé pour le nom '{nom}'.")
 
     def modifier_contact(self, nom):
+        """Modifie les détails d'un contact existant après avoir demandé l'ID du contact."""
         contacts_a_modifier = self.rechercher_contact(nom)
         Ids = []
         if not contacts_a_modifier:
@@ -164,7 +175,6 @@ class GestionnaireContact:
             print("Plusieurs contacts trouvés :")
             for row in contacts_a_modifier:
                 print(f"Id: {row.Id}, Nom: {row.Nom}, Prénom: {row.Prenom}, Email: {row.Email}, Téléphone: {row.Telephone}")
-
                 Ids.append(row.Id)
             while True:
                 try:
@@ -177,10 +187,11 @@ class GestionnaireContact:
                     logging.error("Entrée invalide. Veuillez entrer un numéro.")
 
         nouveau_nom = input(f"Nouveau nom : ")
-        nouveau_prenom = input(f"Nouveau prenom : ")
+        nouveau_prenom = input(f"Nouveau prénom : ")
         nouveau_email = input(f"Nouveau email: ")
-        nouveau_telephone = input(f"Nouveau telephone : ")
+        nouveau_telephone = input(f"Nouveau téléphone : ")
 
+        # Requête de mise à jour des détails du contact
         update_query = """
         UPDATE Contacts
         SET Nom = ?, Prenom = ?, Email = ?, Telephone = ?
@@ -194,22 +205,21 @@ class GestionnaireContact:
             logging.info(f"Contact modifié: {nouveau_nom} {nouveau_prenom}")
 
     def supprimer_contact(self, nom):
-        Id,contacts_a_sup = self.rechercher_contact(nom)
+        """Supprime un contact existant en demandant à l'utilisateur d'entrer l'ID du contact à supprimer."""
+        Id, contacts_a_sup = self.rechercher_contact(nom)
         Ids = []
         if not contacts_a_sup:
-            logging.error(f"Contact avec le nom '{nom}' introuvable pour modification.")
+            logging.error(f"Contact avec le nom '{nom}' introuvable pour suppression.")
             return
-
 
         if len(contacts_a_sup) > 1:
             print("Plusieurs contacts trouvés :")
             for row in contacts_a_sup:
                 print(f"Id: {row.Id}, Nom: {row.Nom}, Prénom: {row.Prenom}, Email: {row.Email}, Téléphone: {row.Telephone}")
-
                 Ids.append(row.Id)
             while True:
                 try:
-                    Id = int(input("Entrez l'ID du contact que vous voulez modifier (1, 2, ...): "))
+                    Id = int(input("Entrez l'ID du contact que vous voulez supprimer (1, 2, ...): "))
                     if Id in Ids:
                         break
                     else:
@@ -225,11 +235,14 @@ class GestionnaireContact:
             logging.info(f"Contact supprimé: {nom}")
 
 
+# Classe principale pour exécuter le programme
 class Main:
     def __init__(self):
+        """Initialise l'application et crée une instance du gestionnaire de contacts."""
         self.gestionnaire = GestionnaireContact()
 
     def main(self):
+        """Boucle principale de l'application permettant à l'utilisateur de choisir les actions à effectuer."""
         while True:
             print("\nGestionnaire de Contacts")
             print("1. Ajouter un contact")
@@ -245,11 +258,11 @@ class Main:
             elif choix == "2":
                 self.gestionnaire.afficher_contacts()
             elif choix == "3":
-                self.gestionnaire.rechercher_contact(input("entrer le nom contact"))
+                self.gestionnaire.rechercher_contact(input("Entrez le nom du contact: "))
             elif choix == "4":
-                self.gestionnaire.modifier_contact(input("enter le nom de contact : "))
+                self.gestionnaire.modifier_contact(input("Entrez le nom de contact : "))
             elif choix == "5":
-                self.gestionnaire.supprimer_contact(input('entrer le nom de contact: '))
+                self.gestionnaire.supprimer_contact(input('Entrez le nom de contact: '))
             elif choix == "6":
                 print("Au revoir!")
                 break
